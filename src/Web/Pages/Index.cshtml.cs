@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.Extensions.Logging;
 using Web.Models;
 using Web.Services;
+using Microsoft.Extensions.ML;
+using Shared;
 
 namespace Web.Pages
 {
@@ -19,6 +21,8 @@ namespace Web.Pages
         private readonly ILogger<IndexModel> _logger;
 
         private readonly IEnumerable<CarModelDetails> _carModelService;
+
+        private readonly PredictionEnginePool<ModelInput, ModelOutput> _predictionEnginePool;
 
         public bool ShowPrice { get; private set; } = false;
 
@@ -31,11 +35,12 @@ namespace Web.Pages
         public SelectList CarYearSL { get; } = new  SelectList(Enumerable.Range(1930, (DateTime.Today.Year-1929)).Reverse());
         public SelectList CarMakeSL { get; }
 
-        public IndexModel(ILogger<IndexModel> logger, ICarModelService carFileModelService)
+        public IndexModel(ILogger<IndexModel> logger, ICarModelService carFileModelService, PredictionEnginePool<ModelInput, ModelOutput> predictionEnginePool)
         {
             _logger = logger;
             _carModelService = carFileModelService.GetDetails();
             CarMakeSL = new SelectList(_carModelService, "Id", "Model", default, "Make");
+            _predictionEnginePool = predictionEnginePool;
         }
 
         public void OnGet()
@@ -50,9 +55,17 @@ namespace Web.Pages
             CarInfo.Make = selectedMakeModel.Make;
             CarInfo.Model = selectedMakeModel.Model;
 
-            _logger.LogInformation($"{CarInfo.Make}  | {CarInfo.Model}");
-            _logger.LogInformation($"Predicted price for car {CarInfo.Year} from {CarInfo.Mileage} miles");
+            ModelInput input = new ModelInput
+            {
+                Year = (float)CarInfo.Year,
+                Mileage = (float)CarInfo.Mileage,
+                Make = CarInfo.Make,
+                Model = CarInfo.Model
+            };
+
+            ModelOutput prediction = _predictionEnginePool.Predict(input);
+            CarInfo.Price = prediction.Score;
             ShowPrice = true;
-        }        
+        }
     }
 }
