@@ -34,3 +34,8 @@ jobs:
     - name: Model Tests
       working-directory: 'test/ModelTests'      
       run: dotnet test ModelTests.csproj       
+    - name: Upload model as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: model.zip
+        path: /media/data/${{ github.run_id }}.zip 
