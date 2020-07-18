@@ -25,16 +25,5 @@ namespace ModelTests
         {
 
         }
-
-        private PredictionEngine<ModelInput, ModelOutput> GetPredictionEngine()
-        {
-            var modelPath = MLConfiguration.GetModelPath();
-
-            var mlContext = new MLContext();
-
-            var model = mlContext.Model.Load(modelPath, out var schema);
-
-            return mlContext.Model.CreatePredictionEngine<ModelInput, ModelOutput>(model, schema);
-        }
     }
 }

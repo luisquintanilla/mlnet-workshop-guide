@@ -9,7 +9,6 @@ namespace DataTests
     [TestClass]
     public class DataValidationTests
     {
-        private static IEnumerable<ModelInput> Rows;
         private static readonly string ModelPath = "";
 
         [ClassInitialize]
