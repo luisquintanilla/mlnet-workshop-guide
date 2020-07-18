@@ -31,3 +31,6 @@ jobs:
     - name: Data Tests
       working-directory: 'test/DataTests'     
       run: dotnet test DataTests.csproj   
+    - name: Model Tests
+      working-directory: 'test/ModelTests'      
+      run: dotnet test ModelTests.csproj       
