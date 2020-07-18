@@ -7,8 +7,8 @@ namespace TrainConsole
 {
     class Program
     {
-        private static string TRAIN_DATA_FILEPATH = @"C:\Dev\true_car_listings.csv";
-        private static string MODEL_FILEPATH = @"C:\Dev\MLModel.zip";
+        private static string TRAIN_DATA_FILEPATH = @"/media/data/true_car_listings.csv";
+        private static string MODEL_FILEPATH = MLConfiguration.GetModelPath();
 
         static void Main(string[] args)
         {
