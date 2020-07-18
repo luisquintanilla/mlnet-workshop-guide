@@ -35,7 +35,6 @@ namespace Web
             services.AddTransient<ICarModelService,CarFileModelService>((opt) => {
                 var filePath = Path.Join(_env.WebRootPath, "data", "carmakerdetails.json");
                 return new CarFileModelService(filePath);});
-            services.AddPredictionEnginePool<ModelInput, ModelOutput>().FromFile(@"C:\Dev\MLModel.zip");
             services.AddPredictionEnginePool<ModelInput, ModelOutput>().FromUri(@"https://ndcmelbourne.blob.core.windows.net/model/MLModel.zip");
         }
 
