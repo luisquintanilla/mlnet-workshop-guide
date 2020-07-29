@@ -36,6 +36,8 @@ namespace Web
                 var filePath = Path.Join(_env.WebRootPath, "data", "carmakerdetails.json");
                 return new CarFileModelService(filePath);});
             services.AddPredictionEnginePool<ModelInput, ModelOutput>().FromUri(modelName: "PricePrediction", uri: @"https://ndcmelbourne.blob.core.windows.net/model/MLModel.zip");
+            services.AddPredictionEnginePool<ONNXInput, ONNXOutput>().FromFile(modelName: "DamageDetection", filePath: @"C:/Dev/ONNXModel.zip");
+            services.AddTransient<IDamageDetectionService, DamageDetectionService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

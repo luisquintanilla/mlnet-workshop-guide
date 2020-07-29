@@ -29,6 +29,7 @@ namespace Web.Pages
         private readonly PredictionEnginePool<ModelInput, ModelOutput> _pricePredictionEnginePool;
 
         private readonly IEnumerable<CarModelDetails> _carModelService;
+        private readonly IDamageDetectionService _damageDetectionService;
 
         public bool ShowPrice { get; private set; } = false;
         public bool ShowImage { get; private set; } = false;
@@ -45,13 +46,14 @@ namespace Web.Pages
         public SelectList CarYearSL { get; } = new SelectList(Enumerable.Range(1930, (DateTime.Today.Year - 1929)).Reverse());
         public SelectList CarMakeSL { get; }
 
-        public IndexModel(IWebHostEnvironment env, ILogger<IndexModel> logger, ICarModelService carFileModelService, PredictionEnginePool<ModelInput, ModelOutput> pricePredictionEnginePool)
+        public IndexModel(IWebHostEnvironment env, ILogger<IndexModel> logger, ICarModelService carFileModelService, PredictionEnginePool<ModelInput, ModelOutput> pricePredictionEnginePool, IDamageDetectionService damageDetectionService)
         {
             _env = env;
             _logger = logger;
             _carModelService = carFileModelService.GetDetails();
             CarMakeSL = new SelectList(_carModelService, "Id", "Model", default, "Make");
             _pricePredictionEnginePool = pricePredictionEnginePool;
+            _damageDetectionService = damageDetectionService;
         }
 
         public void OnGet()
@@ -75,28 +77,40 @@ namespace Web.Pages
             };
 
             ModelOutput prediction = _pricePredictionEnginePool.Predict(modelName: "PricePrediction", example: input);
+
             CarInfo.Price = prediction.Score;
 
             if (ImageUpload != null)
             {
-                await ProcessUploadedImageAsync(ImageUpload);
+                var boundingBoxes = await ProcessUploadedImageAsync(ImageUpload);
+                var damageCost = _damageDetectionService.CalculateDamageTotalCost(boundingBoxes);
+                CarInfo.Price = Math.Max(0, CarInfo.Price - damageCost);
                 ShowImage = true;
             }
-
             ShowPrice = true;
         }
 
-        private async Task ProcessUploadedImageAsync(IFormFile uploadedImage)
+        private async Task<IEnumerable<BoundingBox>> ProcessUploadedImageAsync(IFormFile uploadedImage)
         {
-            using (var ms = new MemoryStream())
+            // Save uploaded image
+            var fileName = Path.Combine(_env.ContentRootPath, "ImageTemp", $"{Guid.NewGuid().ToString()}.jpg");
+            using (var fs = new FileStream(fileName, FileMode.Create))
             {
                 //Copy image to memory stream
-                await uploadedImage.CopyToAsync(ms);
-
-                // Convert image to base64 string
-                var base64Image = Convert.ToBase64String(ms.ToArray());
-                CarInfo.Base64Image = $"data:image/png;base64,{base64Image}";
+                await uploadedImage.CopyToAsync(fs);
             }
+
+            // Create ONNX input
+            var imageInput = new ONNXInput
+            {
+                ImagePath = fileName
+            };
+
+            // Detect damage
+            var boundingBoxes = _damageDetectionService.DetectDamage(imageInput, 0.7f);
+            CarInfo.Base64Image = _damageDetectionService.AnnotateBase64Image(fileName, boundingBoxes);
+
+            return boundingBoxes;
         }
     }
 }
