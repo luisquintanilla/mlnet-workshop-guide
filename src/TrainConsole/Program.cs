@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.ML;
 using Shared;
+using System.Linq;
 
 namespace TrainConsole
 {
@@ -35,6 +36,21 @@ namespace TrainConsole
             // Train the model
             Console.WriteLine("Training model...");
             var model = trainingPipeline.Fit(trainTestSplit.TrainSet);
+
+            // Make predictions on train and test sets
+            IDataView trainSetPredictions = model.Transform(trainTestSplit.TrainSet);
+            IDataView testSetpredictions = model.Transform(trainTestSplit.TestSet);
+
+            // Calculate evaluation metrics for train and test sets
+            var trainSetMetrics = mlContext.Regression.Evaluate(trainSetPredictions, labelColumnName: "Label", scoreColumnName: "Score");
+            var testSetMetrics = mlContext.Regression.Evaluate(testSetpredictions, labelColumnName: "Label", scoreColumnName: "Score");
+
+            Console.WriteLine($"Train Set R-Squared: {trainSetMetrics.RSquared} | Test Set R-Squared {testSetMetrics.RSquared}");
+
+            // (Optional) Use cross-validation for training and evaluation
+            var crossValidationResults = mlContext.Regression.CrossValidate(trainingData, trainingPipeline, numberOfFolds: 5);
+            var avgRSquared = crossValidationResults.Select(model => model.Metrics.RSquared).Average();
+            Console.WriteLine($"Cross Validated R-Squared: {avgRSquared}");
         }
     }
 }
