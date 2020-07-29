@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.ML;
 
 namespace TrainConsole
 {
@@ -6,7 +7,7 @@ namespace TrainConsole
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            MLContext mlContext = new MLContext();
         }
     }
 }
