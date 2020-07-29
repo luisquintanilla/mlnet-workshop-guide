@@ -9,6 +9,7 @@ namespace TrainConsole
     {
         // update this with your file's path where you saved it
         private static string TRAIN_DATA_FILEPATH = @"C:\Dev\mlnet-workshop\data\true_car_listings.csv";
+        private static string MODEL_FILEPATH = @"C:\Dev\MLModel.zip";
 
         static void Main(string[] args)
         {
@@ -51,6 +52,10 @@ namespace TrainConsole
             var crossValidationResults = mlContext.Regression.CrossValidate(trainingData, trainingPipeline, numberOfFolds: 5);
             var avgRSquared = crossValidationResults.Select(model => model.Metrics.RSquared).Average();
             Console.WriteLine($"Cross Validated R-Squared: {avgRSquared}");
+
+            // Save model
+            Console.WriteLine("Saving model...");
+            mlContext.Model.Save(model, trainingData.Schema, MODEL_FILEPATH);
         }
     }
 }
